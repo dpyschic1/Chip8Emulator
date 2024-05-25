@@ -1,4 +1,5 @@
 ﻿using Chip8;
+using Chip8.Peripherals;
 
 public class Program 
 {
@@ -6,7 +7,8 @@ public class Program
     {
         try{
         using var romLoader = new FileStream("demo.ch8", FileMode.Open);
-        var cpu = new Chip8Processor();
+        var soundPlayer = new SoundPlayer();
+        var cpu = new Chip8Processor(soundPlayer);
         await cpu.LoadRom(romLoader);
         while(true)
         {

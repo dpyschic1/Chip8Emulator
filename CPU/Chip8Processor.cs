@@ -39,6 +39,7 @@ public class Chip8Processor
         _instructions[0x6] = this.SetVxtoNN;
         _instructions[0x7] = this.AddNNtoVx;
         _instructions[0x8] = this.XYOps;
+        _instructions[0x9] = this.SkipIfVxNeqVy;
 
         _instructions[0xA] = this.SetI;
         _instructions[0xB] = this.JumpWithV0;
@@ -70,7 +71,7 @@ public class Chip8Processor
 
     public void Tick()
     {
-        var data = (ushort) (_memory[++_pc] << 8 | _memory[_pc++]);
+        var data = (ushort) (_memory[_pc++] << 8 | _memory[_pc++]);
         var opCode = new OpCode(data);
 
         if(!_instructions.TryGetValue(opCode.Set, out var instruction))
@@ -273,6 +274,12 @@ public class Chip8Processor
                 throw new InstructionNotValidException($" OpCode 0XE{opCode.NN:X} is not implemented");
         }
 
+    }
+
+    private void SkipIfVxNeqVy(OpCode opCode)
+    {
+        if(_v[opCode.X] != _v[opCode.Y])
+            _pc += 2;
     }
 
     private void Push(ushort ProgramCounter)
