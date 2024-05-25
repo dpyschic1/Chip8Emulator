@@ -239,9 +239,9 @@ public class Chip8Processor
         var startX = _v[opCode.X];
         var startY = _v[opCode.Y];
 
-        for(var x = 0; x < SCREEN_HEIGHT; x++)
+        for(var x = 0; x < SCREEN_WIDTH; x++)
         {
-            for(var y = 0; y < SCREEN_WIDTH; y++)
+            for(var y = 0; y < SCREEN_HEIGHT; y++)
             {
                 if(_pendingClearScreen[x, y])
                 {
@@ -284,7 +284,6 @@ public class Chip8Processor
                     _v[0xF] = 1;
             }
         }
-
     }
 
     private void ZeroOps(OpCode opCode)
@@ -348,7 +347,7 @@ public class Chip8Processor
     private void Misc(OpCode opCode)
     {
         if(!_miscInstructions.TryGetValue(opCode.NN, out var instructions))
-            return; //throw new InstructionNotValidException($"Instruction is not part of arch or is not implemented");
+            throw new InstructionNotValidException($"Instruction is not part of arch or is not implemented");
 
         instructions(opCode);
     }
