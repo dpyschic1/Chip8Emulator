@@ -8,14 +8,19 @@ public class Chip8Processor
     private readonly byte[] _memory = new byte[0x1000];
     private readonly byte[] _v = new byte[16];
     private readonly ushort[] _stack = new ushort[16];
-    private const int SCREEN_WIDTH = 64;
-    private const int SCREEN_HEIGHT = 32;
-    private const int ROM_START_LOCATION = 0x200;
     private readonly bool[,] _screen =  new bool[SCREEN_WIDTH, SCREEN_HEIGHT];
+    
     private ushort _pc = 0;
     private ushort _sp = 0;
     private ushort _i = 0;
     private byte _delay = 0;
+    
+    private readonly HashSet<byte> _pressedKeys = [];
+
+    private const int SCREEN_WIDTH = 64;
+    private const int SCREEN_HEIGHT = 32;
+    private const int ROM_START_LOCATION = 0x200;
+
     private readonly Dictionary<byte, Action<OpCode>> _instructions = [];
     private readonly Dictionary<byte, Action<OpCode>> _miscInstructions = [];
     private readonly Random _rand = new ();
@@ -36,6 +41,7 @@ public class Chip8Processor
         _instructions[0xB] = this.JumpWithV0;
         _instructions[0xC] = this.Rand;
         _instructions[0xD] = this.Draw;
+        _instructions[0xE] = this.SkipOnKey;
     }
 
     public async Task LoadRom(Stream rom)
@@ -44,6 +50,7 @@ public class Chip8Processor
         using var memory = new MemoryStream(_memory, ROM_START_LOCATION, (int)rom.Length, true);
         await rom.CopyToAsync(memory);
     }
+    
 
     public void Tick()
     {
@@ -52,7 +59,8 @@ public class Chip8Processor
 
         if(!_instructions.TryGetValue(opCode.Set, out var instruction))
         {
-            throw new InstructionNotValidException($"Instruction is not part of arch or is not implemented");
+            //throw new InstructionNotValidException($"Instruction is not part of arch or is not implemented");
+            return;
         }
 
         instruction(opCode);
@@ -77,7 +85,15 @@ public class Chip8Processor
         _sp = 0;
     }
 
+    public void SetKeyDown(Keys key)
+    {
+        _pressedKeys.Add((byte)key);
+    }
     
+    public void SetKeyUp(Keys key)
+    {
+        _pressedKeys.Remove((byte)key);
+    }
     private void JumptoAddress(OpCode opCode)
     {
         _pc = opCode.NNN;
@@ -214,8 +230,29 @@ public class Chip8Processor
                 break;
 
             default:
-                throw new InstructionNotValidException();
+                //throw new InstructionNotValidException();
+                return;
         }
+    }
+
+    private void SkipOnKey(OpCode opCode)
+    {
+        switch(opCode.NN)
+        {
+            case 0X9E:
+                if(_pressedKeys.Contains(_v[opCode.X]))
+                    _pc += 2;
+                break;
+
+            case 0XA1:
+                if(!_pressedKeys.Contains(_v[opCode.X]))
+                    _pc += 2;
+                break;
+
+            default:
+                throw new InstructionNotValidException($" OpCode 0XE{opCode.NN:X} is not implemented");
+        }
+
     }
 
     private void Push(ushort ProgramCounter)

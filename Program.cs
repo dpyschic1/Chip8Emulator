@@ -2,10 +2,20 @@
 
 public class Program 
 {
-    public static void Main()
+    public static async Task Main()
     {
-        using var romLoader = new BinaryReader(new FileStream("demo.ch8", FileMode.Open));
+        try{
+        using var romLoader = new FileStream("demo.ch8", FileMode.Open);
         var cpu = new Chip8Processor();
-        cpu.
+        await cpu.LoadRom(romLoader);
+        while(true)
+        {
+            cpu.Tick();
+        }
+        }
+        catch(Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
+        }
     }
 }
