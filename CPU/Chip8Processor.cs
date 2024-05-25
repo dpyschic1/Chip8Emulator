@@ -1,5 +1,6 @@
 ﻿using Chip8.CPU;
 using Chip8.Exceptions;
+using Chip8.Peripherals;
 
 namespace Chip8;
 
@@ -25,7 +26,9 @@ public class Chip8Processor
     private readonly Dictionary<byte, Action<OpCode>> _miscInstructions = [];
     private readonly Random _rand = new ();
 
-    public Chip8Processor()
+    private readonly ISoundPlayer _soundPlayer;
+
+    public Chip8Processor(ISoundPlayer soundPlayer)
     {
         _instructions[0x0] = this.ZeroOps;
         _instructions[0x1] = this.JumptoAddress;
@@ -47,12 +50,14 @@ public class Chip8Processor
         _miscInstructions[0x07] = this.GetDelay;
         _miscInstructions[0x0A] = this.WaitKey;
         _miscInstructions[0x15] = this.SetDelay;
-        //_miscInsturctions[0x18] = this.SetSoundTimer;
+        _miscInstructions[0x18] = this.SetSoundTimer;
         _miscInstructions[0x1E] = this.AddVxToI;
         _miscInstructions[0x29] = this.SetIToCharSprite;
         _miscInstructions[0x33] = this.SetBCD;
         _miscInstructions[0x55] = this.RegDump;
         _miscInstructions[0x65] = this.RegLoad;
+
+        _soundPlayer = soundPlayer;
     }
 
     public async Task LoadRom(Stream rom)
@@ -313,7 +318,7 @@ public class Chip8Processor
 
     private void SetSoundTimer(OpCode opCode)
     {
-        return;
+        _soundPlayer.Beep(_v[opCode.X]);
     }
 
     private void AddVxToI(OpCode opCode)
