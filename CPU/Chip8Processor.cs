@@ -42,6 +42,17 @@ public class Chip8Processor
         _instructions[0xC] = this.Rand;
         _instructions[0xD] = this.Draw;
         _instructions[0xE] = this.SkipOnKey;
+        _instructions[0xF] = this.Misc;
+
+        _miscInstructions[0x07] = this.GetDelay;
+        _miscInstructions[0x0A] = this.WaitKey;
+        _miscInstructions[0x15] = this.SetDelay;
+        //_miscInsturctions[0x18] = this.SetSoundTimer;
+        _miscInstructions[0x1E] = this.AddVxToI;
+        _miscInstructions[0x29] = this.SetIToCharSprite;
+        _miscInstructions[0x33] = this.SetBCD;
+        _miscInstructions[0x55] = this.RegDump;
+        _miscInstructions[0x65] = this.RegLoad;
     }
 
     public async Task LoadRom(Stream rom)
@@ -94,6 +105,9 @@ public class Chip8Processor
     {
         _pressedKeys.Remove((byte)key);
     }
+
+    #region Instructions
+
     private void JumptoAddress(OpCode opCode)
     {
         _pc = opCode.NNN;
@@ -223,6 +237,7 @@ public class Chip8Processor
         switch(opCode.NN)
         {
             case 0xE0:
+                Array.Clear(_screen, 0, _screen.Length);
                 break;
             
             case 0xEE:
@@ -265,4 +280,71 @@ public class Chip8Processor
     {
         return _stack[--_sp];
     }
+
+    #endregion Instructions
+
+    #region Misc instructions
+    
+    private void Misc(OpCode opCode)
+    {
+        if(!_miscInstructions.TryGetValue(opCode.NN, out var instructions))
+            return; //throw new InstructionNotValidException($"Instruction is not part of arch or is not implemented");
+
+        instructions(opCode);
+    }
+
+    private void GetDelay(OpCode opCode)
+    {
+        _v[opCode.X] = _delay;
+    }
+
+    private void WaitKey(OpCode opCode)
+    {
+        if(!_pressedKeys.Any())
+            _pc -= 2;
+        else
+            _v[opCode.X] = _pressedKeys.First();
+    }
+
+    private void SetDelay(OpCode opCode)
+    {
+        _delay = _v[opCode.X];
+    }
+
+    private void SetSoundTimer(OpCode opCode)
+    {
+        return;
+    }
+
+    private void AddVxToI(OpCode opCode)
+    {
+        _i += _v[opCode.X];
+    }
+
+    private void SetIToCharSprite(OpCode opCode)
+    {
+        _i = (ushort)(_v[opCode.X] * 5);
+    }
+
+    private void SetBCD(OpCode opCode)
+    {
+        _memory[_i] = (byte) (_v[opCode.X]/100);
+        _memory[_i] = (byte) ((_v[opCode.X]/10) % 10);
+        _memory[_i] = (byte) (_v[opCode.X] % 10);
+    }
+
+    private void RegDump(OpCode opCode)
+    {
+        for(byte i = 0; i <= opCode.X; i++ )
+            _memory[_i + 1] = _v[i];
+    }
+
+    private void RegLoad(OpCode opCode)
+    {
+        for(byte i = 0; i <= opCode.X; i++)
+            _v[i] = _v[_i + i];
+    }
+
+    #endregion Misc instructions
+
 }
