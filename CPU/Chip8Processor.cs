@@ -9,7 +9,9 @@ public class Chip8Processor
     private readonly byte[] _memory = new byte[0x1000];
     private readonly byte[] _v = new byte[16];
     private readonly ushort[] _stack = new ushort[16];
-    private readonly bool[,] _screen =  new bool[SCREEN_WIDTH, SCREEN_HEIGHT];
+    private bool[,] _screen =  new bool[SCREEN_WIDTH, SCREEN_HEIGHT];
+    private bool[,] _pendingClearScreen = new bool[SCREEN_WIDTH, SCREEN_HEIGHT];
+    private bool _needsRedraw = true;
     
     private ushort _pc = 0;
     private ushort _sp = 0;
@@ -76,8 +78,7 @@ public class Chip8Processor
 
         if(!_instructions.TryGetValue(opCode.Set, out var instruction))
         {
-            //throw new InstructionNotValidException($"Instruction is not part of arch or is not implemented");
-            return;
+            throw new InstructionNotValidException($"Instruction is not part of arch or is not implemented");
         }
 
         instruction(opCode);
@@ -235,7 +236,55 @@ public class Chip8Processor
 
     private void Draw(OpCode opCode)
     {
-        throw new NotImplementedException();
+        var startX = _v[opCode.X];
+        var startY = _v[opCode.Y];
+
+        for(var x = 0; x < SCREEN_HEIGHT; x++)
+        {
+            for(var y = 0; y < SCREEN_WIDTH; y++)
+            {
+                if(_pendingClearScreen[x, y])
+                {
+                    if(_screen[x, y])
+                    {
+                        _needsRedraw = true;
+                    }
+
+                    _pendingClearScreen[x, y] = false;
+                    _screen[x, y] = false;
+                }
+            }
+        }
+
+        _v[0xF] = 0;
+
+        for(var i = 0; i < opCode.N; i++)
+        {
+            var rowData = _memory[_i + i];
+
+            for(var bit = 0; bit < 8; bit++)
+            {
+                var x = (startX + bit) % SCREEN_WIDTH;
+                var y = (startY + i) % SCREEN_HEIGHT;
+
+                var spriteBit = ((rowData >> (7 - bit)) & 1);
+                var oldBit = _screen[x, y] ? 1 : 0;
+
+                if(oldBit != spriteBit)
+                    _needsRedraw = true;
+                
+                var newBit = oldBit ^ spriteBit;
+
+                if(newBit != 0)
+                    _screen[x, y] = true;
+                else
+                    _pendingClearScreen[x, y] = true;
+
+                if(oldBit != 0 && newBit == 0)
+                    _v[0xF] = 1;
+            }
+        }
+
     }
 
     private void ZeroOps(OpCode opCode)
@@ -251,8 +300,7 @@ public class Chip8Processor
                 break;
 
             default:
-                //throw new InstructionNotValidException();
-                return;
+                throw new InstructionNotValidException();
         }
     }
 

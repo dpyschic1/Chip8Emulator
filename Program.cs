@@ -8,6 +8,7 @@ public class Program
         try{
         using var romLoader = new FileStream("demo.ch8", FileMode.Open);
         var soundPlayer = new SoundPlayer();
+        var renderer = new LambdaRenderer(null);
         var cpu = new Chip8Processor(soundPlayer);
         await cpu.LoadRom(romLoader);
         while(true)
