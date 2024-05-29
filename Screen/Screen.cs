@@ -107,7 +107,7 @@ namespace Chip8.Screen
 		Task GameLoop()
 		{
 			while (true)
-			{
+			{	//TODO: Find a better way to do this
 				var currentTime = stopWatch.Elapsed;
 				var elapsedTime = currentTime - lastTime;
 

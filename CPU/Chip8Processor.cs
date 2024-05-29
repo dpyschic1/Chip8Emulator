@@ -3,7 +3,7 @@ using Chip8.Exceptions;
 using Chip8.Peripherals;
 
 namespace Chip8;
-
+//TODO: Needs performance optimizations
 public class Chip8Processor
 {
     private readonly byte[] _memory = new byte[0x1000];
