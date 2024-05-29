@@ -1,13 +1,13 @@
 namespace Chip8.Peripherals
 {
-    public class LambdaRenderer
+    public class LambdaRenderer : IRenderer
     {
-        private readonly Action _draw;
-        public LambdaRenderer(Action draw)
+        private readonly Action<bool[,]> _draw;
+        public LambdaRenderer(Action<bool[,]> draw)
         {
             _draw = draw;
         }
-        public void Draw()
-         => _draw?.Invoke();
+        public void Draw(bool[,] screen)
+         => _draw?.Invoke(screen);
     }
 }

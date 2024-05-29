@@ -2,6 +2,6 @@ namespace Chip8.Peripherals
 {
     public interface IRenderer
     {
-        void Draw();
+        void Draw(bool[,] screen);
     }
 }

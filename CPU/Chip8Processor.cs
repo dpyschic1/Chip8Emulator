@@ -29,8 +29,9 @@ public class Chip8Processor
     private readonly Random _rand = new ();
 
     private readonly ISoundPlayer _soundPlayer;
+    private readonly IRenderer _renderer;
 
-    public Chip8Processor(ISoundPlayer soundPlayer)
+    public Chip8Processor(IRenderer renderer ,ISoundPlayer soundPlayer)
     {
         _instructions[0x0] = this.ZeroOps;
         _instructions[0x1] = this.JumptoAddress;
@@ -61,6 +62,7 @@ public class Chip8Processor
         _miscInstructions[0x65] = this.RegLoad;
 
         _soundPlayer = soundPlayer;
+        _renderer = renderer;
     }
 
     public async Task LoadRom(Stream rom)
@@ -82,10 +84,19 @@ public class Chip8Processor
         }
 
         instruction(opCode);
-        
+    }
+
+    public void Tick60Hz()
+    {
         if(_delay > 0)
         {
             _delay--;
+        }
+
+        if(_needsRedraw)
+        {
+            _renderer.Draw(_screen);
+            _needsRedraw = false;
         }
     }
 
@@ -103,14 +114,14 @@ public class Chip8Processor
         _sp = 0;
     }
 
-    public void SetKeyDown(Keys key)
+    public void SetKeyDown(byte key)
     {
-        _pressedKeys.Add((byte)key);
+        _pressedKeys.Add(key);
     }
     
-    public void SetKeyUp(Keys key)
+    public void SetKeyUp(byte key)
     {
-        _pressedKeys.Remove((byte)key);
+        _pressedKeys.Remove(key);
     }
 
     #region Instructions

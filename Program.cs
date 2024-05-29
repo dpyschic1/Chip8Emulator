@@ -1,24 +1,10 @@
-﻿using Chip8;
-using Chip8.Peripherals;
-
-public class Program 
+﻿public static class Program 
 {
-    public static async Task Main()
+    [STAThread]
+    public static void Main()
     {
-        try{
-        using var romLoader = new FileStream("demo.ch8", FileMode.Open);
-        var soundPlayer = new SoundPlayer();
-        var renderer = new LambdaRenderer(null);
-        var cpu = new Chip8Processor(soundPlayer);
-        await cpu.LoadRom(romLoader);
-        while(true)
-        {
-            cpu.Tick();
-        }
-        }
-        catch(Exception ex)
-        {
-            Console.WriteLine(ex.ToString());
-        }
+        Application.EnableVisualStyles();
+		Application.SetCompatibleTextRenderingDefault(false);
+		Application.Run(new Chip8.Screen.Screen());
     }
 }
